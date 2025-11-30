@@ -11,29 +11,32 @@ import { toast } from "sonner";
 const Login = () => {
   const navigate = useNavigate();
   const { signIn } = useAuth();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     setLoading(true);
 
     const { error } = await signIn(email, password);
-    
+
     if (error) {
       toast.error(error.message || "Failed to sign in");
       setLoading(false);
     } else {
       toast.success("Successfully signed in!");
+      navigate("/home"); // redirect after login
     }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-primary/5 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <Button 
-          variant="ghost" 
+        <Button
+          variant="ghost"
           className="mb-4"
           onClick={() => navigate("/")}
         >
@@ -55,6 +58,7 @@ const Login = () => {
               Sign in to continue managing your finances
             </CardDescription>
           </CardHeader>
+
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
@@ -68,6 +72,7 @@ const Login = () => {
                   required
                 />
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
                 <Input
@@ -79,6 +84,7 @@ const Login = () => {
                   required
                 />
               </div>
+
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? "Signing in..." : "Sign In"}
               </Button>

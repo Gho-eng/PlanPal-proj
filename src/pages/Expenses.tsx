@@ -27,18 +27,20 @@ interface Expense {
   categories: Category | null;
 }
 
+const MAX_EXPENSE = 20000; // 🔥 Your expense limit (set any number)
+
 const Expenses = () => {
   const { user } = useAuth();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
-  
+
   // Form states
   const [amount, setAmount] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [description, setDescription] = useState("");
-  const [expenseDate, setExpenseDate] = useState(new Date().toISOString().split('T')[0]);
+  const [expenseDate, setExpenseDate] = useState(new Date().toISOString().split("T")[0]);
 
   useEffect(() => {
     if (user) {
@@ -49,10 +51,10 @@ const Expenses = () => {
 
   const fetchExpenses = async () => {
     const { data, error } = await supabase
-      .from('expenses')
-      .select('*, categories(*)')
-      .order('expense_date', { ascending: false });
-    
+      .from("expenses")
+      .select("*, categories(*)")
+      .order("expense_date", { ascending: false });
+
     if (error) {
       toast.error("Failed to load expenses");
     } else {
@@ -63,10 +65,10 @@ const Expenses = () => {
 
   const fetchCategories = async () => {
     const { data, error } = await supabase
-      .from('categories')
-      .select('*')
-      .order('name');
-    
+      .from("categories")
+      .select("*")
+      .order("name");
+
     if (error) {
       toast.error("Failed to load categories");
     } else {
@@ -77,15 +79,36 @@ const Expenses = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const { error } = await supabase
-      .from('expenses')
-      .insert({
-        user_id: user?.id,
-        amount: parseFloat(amount),
-        category_id: categoryId || null,
-        description: description || null,
-        expense_date: expenseDate
-      });
+    const numAmount = parseFloat(amount);
+
+    // 🔥 VALIDATIONS
+    if (!numAmount || isNaN(numAmount)) {
+      toast.error("Please enter a valid amount");
+      return;
+    }
+
+    if (numAmount <= 0) {
+      toast.error("Amount must be greater than zero");
+      return;
+    }
+
+    if (numAmount > MAX_EXPENSE) {
+      toast.error(`Expense exceeds limit of ₱${MAX_EXPENSE.toLocaleString()}`);
+      return;
+    }
+
+    if (!categoryId) {
+      toast.error("Please select a category");
+      return;
+    }
+
+    const { error } = await supabase.from("expenses").insert({
+      user_id: user?.id,
+      amount: numAmount,
+      category_id: categoryId,
+      description: description || null,
+      expense_date: expenseDate,
+    });
 
     if (error) {
       toast.error("Failed to add expense");
@@ -98,10 +121,7 @@ const Expenses = () => {
   };
 
   const handleDelete = async (id: string) => {
-    const { error } = await supabase
-      .from('expenses')
-      .delete()
-      .eq('id', id);
+    const { error } = await supabase.from("expenses").delete().eq("id", id);
 
     if (error) {
       toast.error("Failed to delete expense");
@@ -115,17 +135,17 @@ const Expenses = () => {
     setAmount("");
     setCategoryId("");
     setDescription("");
-    setExpenseDate(new Date().toISOString().split('T')[0]);
+    setExpenseDate(new Date().toISOString().split("T")[0]);
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-PH', {
-      style: 'currency',
-      currency: 'PHP'
+    return new Intl.NumberFormat("en-PH", {
+      style: "currency",
+      currency: "PHP",
     }).format(amount);
   };
 
-  const totalExpenses = expenses.reduce((sum, exp) => sum + parseFloat(exp.amount.toString()), 0);
+  const totalExpenses = expenses.reduce((sum, exp) => sum + Number(exp.amount), 0);
 
   if (loading) {
     return <div className="flex justify-center items-center h-64">Loading...</div>;
@@ -133,11 +153,13 @@ const Expenses = () => {
 
   return (
     <div className="space-y-6">
+      {/* HEADER + ADD BUTTON */}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Expenses</h1>
           <p className="text-muted-foreground">Track your daily spending</p>
         </div>
+
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button>
@@ -145,14 +167,17 @@ const Expenses = () => {
               Add Expense
             </Button>
           </DialogTrigger>
+
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Add New Expense</DialogTitle>
               <DialogDescription>Log a new expense to track your spending</DialogDescription>
             </DialogHeader>
+
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* AMOUNT */}
               <div className="space-y-2">
-                <Label htmlFor="amount">Amount</Label>
+                <Label htmlFor="amount">Amount (Limit: ₱{MAX_EXPENSE.toLocaleString()})</Label>
                 <Input
                   id="amount"
                   type="number"
@@ -163,6 +188,8 @@ const Expenses = () => {
                   required
                 />
               </div>
+
+              {/* CATEGORY */}
               <div className="space-y-2">
                 <Label htmlFor="category">Category</Label>
                 <Select value={categoryId} onValueChange={setCategoryId}>
@@ -178,6 +205,8 @@ const Expenses = () => {
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* DATE */}
               <div className="space-y-2">
                 <Label htmlFor="date">Date</Label>
                 <Input
@@ -188,6 +217,8 @@ const Expenses = () => {
                   required
                 />
               </div>
+
+              {/* DESCRIPTION */}
               <div className="space-y-2">
                 <Label htmlFor="description">Description</Label>
                 <Textarea
@@ -197,12 +228,16 @@ const Expenses = () => {
                   onChange={(e) => setDescription(e.target.value)}
                 />
               </div>
-              <Button type="submit" className="w-full">Add Expense</Button>
+
+              <Button type="submit" className="w-full">
+                Add Expense
+              </Button>
             </form>
           </DialogContent>
         </Dialog>
       </div>
 
+      {/* SUMMARY */}
       <Card>
         <CardHeader>
           <CardTitle>Summary</CardTitle>
@@ -219,6 +254,7 @@ const Expenses = () => {
         </CardContent>
       </Card>
 
+      {/* EXPENSE LIST */}
       <Card>
         <CardHeader>
           <CardTitle>Recent Expenses</CardTitle>
@@ -239,27 +275,27 @@ const Expenses = () => {
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-foreground">
-                        {formatCurrency(parseFloat(expense.amount.toString()))}
+                        {formatCurrency(Number(expense.amount))}
                       </span>
+
                       {expense.categories && (
                         <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
                           {expense.categories.name}
                         </span>
                       )}
                     </div>
+
                     {expense.description && (
                       <p className="text-sm text-muted-foreground mt-1">{expense.description}</p>
                     )}
+
                     <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
                       <Calendar className="h-3 w-3" />
                       {new Date(expense.expense_date).toLocaleDateString()}
                     </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDelete(expense.id)}
-                  >
+
+                  <Button variant="ghost" size="sm" onClick={() => handleDelete(expense.id)}>
                     <Trash2 className="h-4 w-4 text-destructive" />
                   </Button>
                 </div>

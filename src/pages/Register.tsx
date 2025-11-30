@@ -11,6 +11,7 @@ import { toast } from "sonner";
 const Register = () => {
   const navigate = useNavigate();
   const { signUp } = useAuth();
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -19,7 +20,7 @@ const Register = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (password !== confirmPassword) {
       toast.error("Passwords don't match!");
       return;
@@ -33,13 +34,20 @@ const Register = () => {
     setLoading(true);
 
     const { error } = await signUp(email, password, name);
-    
+
     if (error) {
       toast.error(error.message || "Failed to sign up");
       setLoading(false);
-    } else {
-      toast.success("Account created successfully! Signing you in...");
+      return;
     }
+
+    toast.success("Account created successfully! Redirecting...");
+    setLoading(false);
+
+    // Redirect after small delay
+    setTimeout(() => {
+      navigate("/dashboard"); // Or the correct page after login
+    }, 800);
   };
 
   return (
@@ -68,8 +76,10 @@ const Register = () => {
               Start your journey to financial freedom
             </CardDescription>
           </CardHeader>
+
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
+              
               <div className="space-y-2">
                 <Label htmlFor="name">Full Name</Label>
                 <Input
@@ -81,6 +91,7 @@ const Register = () => {
                   required
                 />
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -92,6 +103,7 @@ const Register = () => {
                   required
                 />
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
                 <Input
@@ -103,6 +115,7 @@ const Register = () => {
                   required
                 />
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword">Confirm Password</Label>
                 <Input
@@ -114,6 +127,7 @@ const Register = () => {
                   required
                 />
               </div>
+
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? "Creating Account..." : "Create Account"}
               </Button>
@@ -131,6 +145,7 @@ const Register = () => {
               </p>
             </div>
           </CardContent>
+
         </Card>
       </div>
     </div>
