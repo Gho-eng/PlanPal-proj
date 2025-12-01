@@ -1,15 +1,31 @@
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Trash2, Pin, Target, Calendar } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations-supabase/client";
-import { useAuth } from "@/lib/auth";
+
+// ⛔ Removed Vite-style imports
+// ✅ Use relative imports instead (change these to match your folders)
+import { Button } from "../components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import { Textarea } from "../components/ui/textarea";
+import { Progress } from "../components/ui/progress";
+import { Badge } from "../components/ui/badge";
+
+// ⛔ Removed lucide-react icons
+// ⛔ NOT using Vite alias
+// ⛔ You'll replace these with your own images later
+const IconPlus = () => <span>➕</span>;
+const IconTrash = () => <span>🗑️</span>;
+const IconPin = () => <span>📌</span>;
+const IconTarget = () => <span>🎯</span>;
+const IconCalendar = () => <span>📅</span>;
+
+// ⛔ Removed "@/integrations-supabase"
+import { supabase } from "../supabase/client";
+
+// ⛔ Removed "@/lib/auth"
+import { useAuth } from "../auth/useAuth";
+
 import { toast } from "sonner";
 
 interface Goal {
@@ -55,12 +71,11 @@ const Goals = () => {
     setLoading(false);
   };
 
-  /** CREATE GOAL — VALIDATED */
+  // CREATE GOAL
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const target = parseFloat(targetAmount);
-
     if (isNaN(target) || target <= 0) {
       toast.error("Target amount must be greater than 0");
       return;
@@ -76,9 +91,8 @@ const Goals = () => {
       status: "in_progress"
     });
 
-    if (error) {
-      toast.error("Failed to create goal");
-    } else {
+    if (error) toast.error("Failed to create goal");
+    else {
       toast.success("Goal created successfully!");
       setOpen(false);
       resetForm();
@@ -86,7 +100,7 @@ const Goals = () => {
     }
   };
 
-  /** UPDATE PROGRESS — PREVENT OVERFLOW */
+  // UPDATE PROGRESS — prevents overflow
   const handleUpdateProgress = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedGoal) return;
@@ -114,9 +128,8 @@ const Goals = () => {
       })
       .eq("id", selectedGoal.id);
 
-    if (error) {
-      toast.error("Failed to update progress");
-    } else {
+    if (error) toast.error("Failed to update progress");
+    else {
       toast.success(isCompleted ? "Goal completed!" : "Progress updated!");
       setUpdateOpen(false);
       setAmountToAdd("");
@@ -140,7 +153,6 @@ const Goals = () => {
 
   const handleDelete = async (id: string) => {
     const { error } = await supabase.from("goals").delete().eq("id", id);
-
     if (error) toast.error("Failed to delete goal");
     else {
       toast.success("Goal deleted");
@@ -158,27 +170,24 @@ const Goals = () => {
   const formatCurrency = (amount: number) =>
     new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(amount);
 
-  const calculateProgress = (current: number, target: number) =>
-    Math.min((current / target) * 100, 100);
+  const calculateProgress = (c: number, t: number) =>
+    Math.min((c / t) * 100, 100);
 
-  if (loading)
-    return <div className="flex justify-center items-center h-64">Loading...</div>;
+  if (loading) return <div className="flex justify-center items-center h-64">Loading...</div>;
 
   return (
     <div className="space-y-6">
-      {/* HEADER + CREATE BUTTON */}
+
+      {/* HEADER */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Savings Goals</h1>
-          <p className="text-muted-foreground">Set and track your financial goals</p>
+          <h1 className="text-3xl font-bold">Savings Goals</h1>
+          <p className="text-gray-500">Set and track your financial goals</p>
         </div>
 
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Create Goal
-            </Button>
+            <Button><IconPlus /> Create Goal</Button>
           </DialogTrigger>
 
           <DialogContent>
@@ -188,164 +197,97 @@ const Goals = () => {
             </DialogHeader>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">Goal Title</Label>
-                <Input
-                  id="title"
-                  placeholder="e.g., New Laptop"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  required
-                />
+              <div>
+                <Label>Goal Title</Label>
+                <Input value={title} onChange={(e) => setTitle(e.target.value)} required />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="target">Target Amount</Label>
-                <Input
-                  id="target"
-                  type="number"
-                  min="1"
-                  step="0.01"
-                  placeholder="0.00"
-                  value={targetAmount}
-                  onChange={(e) => setTargetAmount(e.target.value)}
-                  required
-                />
+              <div>
+                <Label>Target Amount</Label>
+                <Input type="number" value={targetAmount} onChange={(e) => setTargetAmount(e.target.value)} required />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="deadline">Deadline (Optional)</Label>
-                <Input
-                  id="deadline"
-                  type="date"
-                  value={deadline}
-                  onChange={(e) => setDeadline(e.target.value)}
-                />
+              <div>
+                <Label>Deadline (Optional)</Label>
+                <Input type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="desc">Description (Optional)</Label>
-                <Textarea
-                  id="desc"
-                  placeholder="What are you saving for?"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                />
+              <div>
+                <Label>Description (Optional)</Label>
+                <Textarea value={description} onChange={(e) => setDescription(e.target.value)} />
               </div>
 
-              <Button type="submit" className="w-full">
-                Create Goal
-              </Button>
+              <Button type="submit" className="w-full">Create Goal</Button>
             </form>
           </DialogContent>
         </Dialog>
       </div>
 
-      {/* LIST OF GOALS */}
+      {/* GOAL LIST */}
       {goals.length === 0 ? (
         <Card>
-          <CardContent className="pt-6">
-            <p className="text-center text-muted-foreground py-8">
-              No goals yet. Create your first savings goal!
-            </p>
+          <CardContent className="py-8 text-center text-gray-500">
+            No goals yet. Create your first savings goal!
           </CardContent>
         </Card>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {goals.map((goal) => {
             const progress = calculateProgress(goal.current_amount, goal.target_amount);
-            const daysLeft =
-              goal.deadline
-                ? Math.ceil(
-                    (new Date(goal.deadline).getTime() - Date.now()) /
-                      (1000 * 60 * 60 * 24)
-                  )
-                : null;
 
             return (
               <Card key={goal.id} className="relative">
+
                 {goal.is_pinned && (
-                  <div className="absolute top-2 right-2">
-                    <Pin className="h-4 w-4 text-primary fill-primary" />
-                  </div>
+                  <div className="absolute top-2 right-2"><IconPin /></div>
                 )}
 
                 <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="flex items-center gap-2">
-                        <Target className="h-5 w-5 text-primary" />
-                        {goal.title}
-                      </CardTitle>
-
-                      {goal.description && (
-                        <CardDescription className="mt-2">
-                          {goal.description}
-                        </CardDescription>
-                      )}
-                    </div>
-                  </div>
-
-                  {goal.status === "completed" && (
-                    <Badge className="w-fit">Completed!</Badge>
-                  )}
+                  <CardTitle className="flex items-center gap-2">
+                    <IconTarget /> {goal.title}
+                  </CardTitle>
+                  {goal.description && <CardDescription>{goal.description}</CardDescription>}
+                  {goal.status === "completed" && <Badge>Completed!</Badge>}
                 </CardHeader>
 
                 <CardContent className="space-y-4">
                   <div>
-                    <div className="flex justify-between text-sm mb-2">
-                      <span className="text-muted-foreground">Progress</span>
-                      <span className="font-semibold text-foreground">
-                        {progress.toFixed(1)}%
-                      </span>
+                    <div className="flex justify-between text-sm">
+                      <span>Progress</span>
+                      <span>{progress.toFixed(1)}%</span>
                     </div>
 
-                    <Progress value={progress} className="h-2" />
+                    <Progress value={progress} />
 
-                    <div className="flex justify-between mt-2 text-sm">
-                      <span className="text-foreground font-medium">
-                        {formatCurrency(goal.current_amount)}
-                      </span>
-                      <span className="text-muted-foreground">
-                        of {formatCurrency(goal.target_amount)}
-                      </span>
+                    <div className="flex justify-between text-sm mt-2">
+                      <span>{formatCurrency(goal.current_amount)}</span>
+                      <span>of {formatCurrency(goal.target_amount)}</span>
                     </div>
                   </div>
 
-                  {daysLeft !== null && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Calendar className="h-4 w-4" />
-                      <span>
-                        {daysLeft > 0
-                          ? `${daysLeft} days remaining`
-                          : "Deadline passed"}
-                      </span>
+                  {goal.deadline && (
+                    <div className="text-sm text-gray-500 flex gap-2">
+                      <IconCalendar /> {goal.deadline}
                     </div>
                   )}
 
-                  {/* ACTION BUTTONS */}
                   <div className="flex gap-2">
                     <Button
                       size="sm"
                       variant="outline"
                       className="flex-1"
-                      onClick={() => {
-                        setSelectedGoal(goal);
-                        setUpdateOpen(true);
-                      }}
                       disabled={goal.status === "completed"}
+                      onClick={() => { setSelectedGoal(goal); setUpdateOpen(true); }}
                     >
                       Add Progress
                     </Button>
 
                     <Button size="sm" variant="outline" onClick={() => handleTogglePin(goal)}>
-                      <Pin
-                        className={`h-4 w-4 ${goal.is_pinned ? "fill-current" : ""}`}
-                      />
+                      <IconPin />
                     </Button>
 
                     <Button size="sm" variant="ghost" onClick={() => handleDelete(goal.id)}>
-                      <Trash2 className="h-4 w-4 text-destructive" />
+                      <IconTrash />
                     </Button>
                   </div>
                 </CardContent>
@@ -361,39 +303,22 @@ const Goals = () => {
           <DialogHeader>
             <DialogTitle>Update Progress</DialogTitle>
             <DialogDescription>
-              Add an amount to your goal: {selectedGoal?.title}
+              Add to: {selectedGoal?.title}
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleUpdateProgress} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="amount">Amount to Add</Label>
+            <div>
+              <Label>Amount to Add</Label>
               <Input
-                id="amount"
                 type="number"
-                min="0.01"
-                step="0.01"
-                placeholder="0.00"
                 value={amountToAdd}
                 onChange={(e) => setAmountToAdd(e.target.value)}
                 required
               />
             </div>
 
-            {selectedGoal && (
-              <div className="text-sm text-muted-foreground">
-                Current: {formatCurrency(selectedGoal.current_amount)} →{" "}
-                New:{" "}
-                {formatCurrency(
-                  selectedGoal.current_amount +
-                    (parseFloat(amountToAdd) || 0)
-                )}
-              </div>
-            )}
-
-            <Button type="submit" className="w-full">
-              Update Progress
-            </Button>
+            <Button type="submit" className="w-full">Update Progress</Button>
           </form>
         </DialogContent>
       </Dialog>
