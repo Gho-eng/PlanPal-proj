@@ -59,8 +59,19 @@ app
         } else res.json({ success: false, error: "user not found" });
     })
     .get("/getUsers", (req, res) => {
-        db.user.findMany().then((results) => {console.log(results)})
+        db.user.findMany().then((result) => {
+            res.json({ success: true, data: result });
+        });
     })
+
+    .post("/getUserId", (req, res) => {
+        db.user
+        .findUnique({where: {id: Number(req.body.id) } })
+        .then((result) => {
+            res.json({ success: true, data: result });
+        });
+    })
+
     .listen(PORT, () => {
         console.log(`Server running on http://localhost:${PORT}`);
     });
