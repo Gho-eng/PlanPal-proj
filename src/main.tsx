@@ -1,5 +1,20 @@
-import { createRoot } from "react-dom/client";
-import App from "./App.tsx";
-import "./index.css";
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <div id="root"></div>
 
-createRoot(document.getElementById("root")!).render(<App />);
+    <script type="module">
+      import React from "https://esm.sh/react";
+      import ReactDOM from "https://esm.sh/react-dom/client";
+
+      function App() {
+        return <h1>Hello React without Vite or Webpack!</h1>;
+      }
+
+      ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+    </script>
+  </body>
+</html>
