@@ -59,19 +59,39 @@ app
         } else res.json({ success: false, error: "user not found" });
     })
     .get("/getUsers", (req, res) => {
-        db.user.findMany().then((result) => {
-            res.json({ success: true, data: result });
-        });
-    })
-
-    .post("/getUserId", (req, res) => {
-        db.user
-        .findUnique({where: {id: Number(req.body.id) } })
+        db.user.findMany({
+        select: {
+            id: true,
+            email: true,
+            username: true,
+            createdAt: true,
+        }})
         .then((result) => {
             res.json({ success: true, data: result });
         });
     })
-
+    .get("/getUserId", (req, res) => {
+        db.user
+        .findUnique({where: {id: Number((req.query.id)) } })
+        .then((result) => {
+            res.json({ success: true, data: {
+                id: result!.id,
+                email: result!.email, 
+                username: result!.username,
+                createdAt: result!.createdAt
+            } });
+        });
+    })
+    .get("/getExpenses", (req, res) => {
+        db.goalData.findMany().then((result) => {
+            res.json({ success: true, data: result });
+        });
+    })
+    .get("/getGoal", (req, res) => {
+        db.user.findMany().then((result) => {
+            res.json({ success: true, data: result });
+        });
+    })
     .listen(PORT, () => {
         console.log(`Server running on http://localhost:${PORT}`);
     });
