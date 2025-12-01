@@ -1,7 +1,4 @@
 import { useState, useEffect } from "react";
-
-// ⛔ Removed Vite-style imports
-// ✅ Use relative imports instead (change these to match your folders)
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
@@ -11,21 +8,14 @@ import { Textarea } from "../components/ui/textarea";
 import { Progress } from "../components/ui/progress";
 import { Badge } from "../components/ui/badge";
 
-// ⛔ Removed lucide-react icons
-// ⛔ NOT using Vite alias
-// ⛔ You'll replace these with your own images later
 const IconPlus = () => <span>➕</span>;
 const IconTrash = () => <span>🗑️</span>;
 const IconPin = () => <span>📌</span>;
 const IconTarget = () => <span>🎯</span>;
 const IconCalendar = () => <span>📅</span>;
 
-// ⛔ Removed "@/integrations-supabase"
 import { supabase } from "../supabase/client";
-
-// ⛔ Removed "@/lib/auth"
 import { useAuth } from "../auth/useAuth";
-
 import { toast } from "sonner";
 
 interface Goal {
