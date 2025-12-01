@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2020",
-    "module": "CommonJS",
+    "module": "CommonJS", 
     "rootDir": ".",
     "outDir": "dist",
 
@@ -11,7 +11,13 @@
     "skipLibCheck": true,
 
     "resolveJsonModule": true,
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+
+    // 1. ADD THIS: Specifically enforces how module files are located
+    "moduleResolution": "node", 
+
+    // 2. TEMPORARY CHANGE: Switch to a more modern CommonJS alternative
+    // If 'node' doesn't work, try 'NodeNext' or 'Bundler' 
   },
   "include": ["."],
   "exclude": ["node_modules"]

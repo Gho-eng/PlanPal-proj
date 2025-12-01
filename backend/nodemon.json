@@ -1,0 +1,9 @@
+{
+  "execMap": {
+    "ts": "ts-node --transpileOnly"
+  },
+  "watch": ["src"],
+  "ext": "ts",
+  "delay": "1000",
+  "exec": "ts-node --transpileOnly ./src/index.ts"
+}
