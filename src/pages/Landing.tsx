@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ArrowRight, TrendingUp, Target, PiggyBank, BarChart3 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import stockImg from "@/assets/stock.png";
+import heroImage from "@/assets/hero-finance.jpg";
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -77,7 +77,8 @@ const Landing = () => {
           <div className="relative">
             <div className="absolute inset-0 bg-primary/10 rounded-3xl blur-3xl" />
             <img 
-              src={stockImg} 
+              src={heroImage} 
+              alt="Financial planning illustration with piggy bank and growing charts" 
               className="relative rounded-2xl shadow-2xl"
             />
           </div>
