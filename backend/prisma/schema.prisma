@@ -14,12 +14,25 @@ model User {
   createdAt DateTime      @default(now())
   expenses  ExpenseData[]
   goals     GoalData[]
+  category  CategoryData[]
+}
+
+model CategoryData {
+  id            Int       @id @default(autoincrement())
+  user          User      @relation(fields: [userId], references: [id])
+  userId        Int
+  name          String     
+  desc          String
+  expense       ExpenseData[]
 }
 
 model ExpenseData {
-  id            Int              @id @default(autoincrement())
-  user          User             @relation(fields: [userId], references: [id])
+  id            Int           @id @default(autoincrement())
+  user          User          @relation(fields: [userId], references: [id])
+  category      CategoryData  @relation(fields: [cat_id], references: [id])
   userId        Int
+  cat_id        Int
+  name          String
   amount        Float
 }
 
