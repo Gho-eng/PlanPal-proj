@@ -1,13 +1,12 @@
-// import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-// import { Plus, Trash2, Tag } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { supabase } from "@/integrations-supabase/client";
-import { useAuth } from "@/lib/auth";
-// import { toast } from "sonner";
+import React, { useState, useEffect } from "react";
+import { Button } from "../../components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card";
+import { Input } from "../../components/ui/input";
+import { Label } from "../../components/ui/label";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "../../components/ui/dialog";
+import { supabase } from "../../integrations-supabase/client";
+import { useAuth } from "../../lib/auth";
+import { toast } from "sonner";
 
 interface Category {
   id: string;
@@ -18,12 +17,16 @@ interface Category {
 
 const Settings = () => {
   const { user } = useAuth();
+
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+
   const [open, setOpen] = useState(false);
   const [categoryName, setCategoryName] = useState("");
+
   const [fullName, setFullName] = useState("");
 
+  /** Load categories + profile */
   useEffect(() => {
     if (user) {
       fetchCategories();
@@ -31,20 +34,20 @@ const Settings = () => {
     }
   }, [user]);
 
+  /** Fetch categories */
   const fetchCategories = async () => {
     const { data, error } = await supabase
       .from("categories")
       .select("*")
       .order("name");
 
-    if (error) {
-      toast.error("Failed to load categories");
-    } else {
-      setCategories(data || []);
-    }
+    if (error) toast.error("Failed to load categories");
+    else setCategories(data || []);
+
     setLoading(false);
   };
 
+  /** Fetch user profile */
   const fetchProfile = async () => {
     const { data } = await supabase
       .from("profiles")
@@ -52,61 +55,53 @@ const Settings = () => {
       .eq("id", user?.id)
       .single();
 
-    if (data) {
-      setFullName(data.full_name);
-    }
+    if (data) setFullName(data.full_name);
   };
 
-  // >>> UPDATED PART: Duplicate Check Added <<<
+  /** Add category (duplicate protection added) */
   const handleAddCategory = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const newName = categoryName.trim().toLowerCase();
+    const nameClean = categoryName.trim().toLowerCase();
 
-    // 1️⃣ Check duplicates locally (case-insensitive)
+    // Check duplicates
     const exists = categories.some(
-      (cat) => cat.name.trim().toLowerCase() === newName
+      (c) => c.name.trim().toLowerCase() === nameClean
     );
 
     if (exists) {
-      toast.error("Category name already exists!");
+      toast.error("Category already exists!");
       return;
     }
 
-    // 2️⃣ Insert new category
-    const { error } = await supabase
-      .from("categories")
-      .insert({
-        user_id: user?.id,
-        name: categoryName.trim(),
-      });
+    const { error } = await supabase.from("categories").insert({
+      user_id: user?.id,
+      name: categoryName.trim(),
+    });
 
     if (error) {
-      if (error.code === "23505") {
-        toast.error("Category already exists in database!");
-      } else {
-        toast.error("Failed to add category");
-      }
+      toast.error("Failed to add category");
       return;
     }
 
-    toast.success("Category added successfully!");
+    toast.success("Category added!");
     setOpen(false);
     setCategoryName("");
     fetchCategories();
   };
 
+  /** Delete category */
   const handleDeleteCategory = async (id: string) => {
     const { error } = await supabase.from("categories").delete().eq("id", id);
 
-    if (error) {
-      toast.error("Failed to delete category");
-    } else {
+    if (error) toast.error("Failed to delete category");
+    else {
       toast.success("Category deleted");
       fetchCategories();
     }
   };
 
+  /** Update profile */
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -115,11 +110,8 @@ const Settings = () => {
       .update({ full_name: fullName })
       .eq("id", user?.id);
 
-    if (error) {
-      toast.error("Failed to update profile");
-    } else {
-      toast.success("Profile updated successfully!");
-    }
+    if (error) toast.error("Failed to update profile");
+    else toast.success("Profile updated!");
   };
 
   if (loading) {
@@ -128,73 +120,65 @@ const Settings = () => {
 
   return (
     <div className="space-y-6">
+      {/* HEADER */}
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Settings</h1>
-        <p className="text-muted-foreground">Manage your account and preferences</p>
+        <h1 className="text-3xl font-bold">Settings</h1>
+        <p className="text-muted-foreground">Manage your account and categories</p>
       </div>
 
-      {/* Profile Section */}
+      {/* PROFILE */}
       <Card>
         <CardHeader>
           <CardTitle>Profile Information</CardTitle>
           <CardDescription>Update your personal details</CardDescription>
         </CardHeader>
+
         <CardContent>
           <form onSubmit={handleUpdateProfile} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
-              <Input
-                id="name"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="Enter your name"
-              />
+              <Label>Full Name</Label>
+              <Input value={fullName} onChange={(e) => setFullName(e.target.value)} />
             </div>
+
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" value={user?.email || ""} disabled className="bg-muted" />
+              <Label>Email</Label>
+              <Input value={user?.email || ""} disabled className="bg-muted" />
             </div>
+
             <Button type="submit">Save Changes</Button>
           </form>
         </CardContent>
       </Card>
 
-      {/* Categories Section */}
+      {/* CATEGORIES */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex justify-between items-center">
           <div>
             <CardTitle>Expense Categories</CardTitle>
-            <CardDescription>Manage your custom expense categories</CardDescription>
+            <CardDescription>Manage your custom categories</CardDescription>
           </div>
 
-          {/* Add Category Dialog */}
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button size="sm">
-                <Plus className="mr-2 h-4 w-4" />
-                Add Category
-              </Button>
+              <Button size="sm">Add Category</Button>
             </DialogTrigger>
 
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Add New Category</DialogTitle>
-                <DialogDescription>Create a custom category for organizing expenses</DialogDescription>
+                <DialogTitle>Add Category</DialogTitle>
               </DialogHeader>
 
               <form onSubmit={handleAddCategory} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="category">Category Name</Label>
-                  <Input
-                    id="category"
-                    placeholder="e.g., Gaming, Transportation"
-                    value={categoryName}
-                    onChange={(e) => setCategoryName(e.target.value)}
-                    required
-                  />
-                </div>
+                <Label>Category Name</Label>
+                <Input
+                  value={categoryName}
+                  onChange={(e) => setCategoryName(e.target.value)}
+                  placeholder="e.g., Transportation"
+                  required
+                />
+
                 <Button type="submit" className="w-full">
-                  Add Category
+                  Add
                 </Button>
               </form>
             </DialogContent>
@@ -204,25 +188,19 @@ const Settings = () => {
         <CardContent>
           {categories.length === 0 ? (
             <p className="text-center text-muted-foreground py-4">
-              No categories yet. Create your first category!
+              No categories yet.
             </p>
           ) : (
             <div className="space-y-2">
-              {categories.map((category) => (
+              {categories.map((cat) => (
                 <div
-                  key={category.id}
-                  className="flex items-center justify-between p-3 border border-border rounded-lg hover:bg-accent/50 transition-colors"
+                  key={cat.id}
+                  className="flex justify-between items-center p-3 border rounded-lg"
                 >
-                  <div className="flex items-center gap-2">
-                    <Tag className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium text-foreground">{category.name}</span>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDeleteCategory(category.id)}
-                  >
-                    <Trash2 className="h-4 w-4 text-destructive" />
+                  <span className="font-medium">{cat.name}</span>
+
+                  <Button variant="ghost" size="sm" onClick={() => handleDeleteCategory(cat.id)}>
+                    Delete
                   </Button>
                 </div>
               ))}
