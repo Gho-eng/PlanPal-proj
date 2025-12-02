@@ -17,11 +17,16 @@ export interface Expense {
 };
 
 export interface Category {
+    id:         number;
     name:       string;
     desc:       string;
     userId:     number;
 }
-// export interface UserLogin {
-//     email:      string;
-//     password:   string;
-// };
+export interface Goal {
+    id:         number;
+    userId:     number;
+    name:       string;
+    desc:       string;
+    targetAmount:  number;
+    savedAmount: number;
+};
