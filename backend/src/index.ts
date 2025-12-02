@@ -9,10 +9,10 @@ import { Expense, User, UserLogin, Category } from "../types/Users";
 let database: User[] = [];
 
 const app = express().use(cors({ exposedHeaders: ["Authorization"] })).use(express.json()).use(express.urlencoded({ extended: true }));
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 4000;
 
 
-const signupInput = app.post("/signup",(req, res) => {
+const signup = app.post("/signup",(req, res) => {
         const user = req.body as User  
         bcrypt.hash(user.password, 10).then((hashedPwd) => {
             return db.user.create({ data: { 
@@ -30,24 +30,33 @@ const signupInput = app.post("/signup",(req, res) => {
         })});
     });
 const login = app.post("/login",(req, res) => {
-        const user = req.body as UserLogin
-        const dbUser = database.find((u) => u.email === user.email);
-        if (dbUser) {
-            bcrypt
+        const user = req.body as UserLogin;
+        db.user.findUnique({ where: { email: user.email } })
+        .then((dbUser) => {
+            if (dbUser) {
+                bcrypt
                 .compare(user.password, dbUser.password)
                 .then((isMatch) => {
                     if (isMatch) {
                         const token = jwt.sign(
-                            { name: dbUser.username },
+                            { name: dbUser.username, id: dbUser.id }, 
                             process.env.API_KEY!,
-                            { expiresIn: "24h",}
+                            { expiresIn: "24h" }
                         )
                         res.setHeader("Authorization", `Bearer ${token}`);
-                        res.json({ success: true, msg: 'verified' });
-                    } else res.json({ success: false, error: "user not found" });
+                        res.json({ success: true, msg: 'verified', userId: dbUser.id });
+                    } 
+                    else res.json({ success: false, error: "Invalid credentials" });
                 })
-                .catch((err) => ({ success: false, error: err }));
-        } else res.json({ success: false, error: "user not found" });
+                .catch((error) => {
+                    console.log(error);
+                    res.json({ success: false, error });
+                })
+            }})
+        .catch((error) => {
+            console.log(error);
+            res.json({ success: false, error });
+        });
     });
 const getUsers = app.get("/getUsers", (req, res) => {
         db.user.findMany({
@@ -56,6 +65,7 @@ const getUsers = app.get("/getUsers", (req, res) => {
             email: true,
             username: true,
             createdAt: true,
+            password: true,
         }})
         .then((result) => {
             res.json({ success: true, data: result });
@@ -74,20 +84,56 @@ const getUserId = app.get("/getUserId", (req, res) => {
         });
     });
 const categoryInput = app.post("/category",(req, res) => {
-        const cat = req.body as Category  
-        db.categoryData.create({ data: { 
-            name:   cat.name,
-            user:   { connect: { id: cat.userId } },
-            desc:   cat.desc,
-        }})
-        .then((result) => {
-            res.json({ success: true });
-        })
-        .catch((error) => {
-            console.log(error);
-            res.json({ success: false, error });
-        })}
-    );
+    const { name, desc, userId: userIdString } = req.body;
+    const userId = parseInt(userIdString, 10);
+    
+    const standardizedName = name ? String(name).trim().toLowerCase() : null;
+
+    if (!standardizedName) {
+         return res.status(400).json({ success: false, message: "Category name is required." });
+    }
+    
+    //Find a category with the same user and name
+    db.categoryData.findFirst({
+        where: {
+            userId: userId,
+            name: standardizedName,
+        },
+    })
+    .then(existingCategory => {
+        if (existingCategory) {
+            console.warn(`[Category Route] Duplicate category name found for user ${userId}: ${name}`);
+            throw { success: false, message: "Similar Category name found" };
+        }
+        
+        // If unique, create the new category
+        return db.categoryData.create({ 
+            data: { 
+                name: standardizedName,
+                desc: desc,
+                user: { connect: { id: userId } },
+            }
+        });
+    })
+    .then(result => {
+        // Only executes if creation was successful
+        console.log("Created category:", result!.id);
+        res.json({ success: true, data: result });
+    })
+    .catch(error => {
+        res.json({ 
+            success: false, 
+            message: "Failed to create category due to a server error.",
+            details: "An unknown error occurred.", error 
+        });
+    });
+});
+const categoryData = app.get("/category", (req, res) => {
+        db.categoryData.findMany().then((result) => {
+            res.json({ success: true, data: result });
+        });
+    });
+
 const expenseInput = app.post("/expense",(req, res) => {
         const exp = req.body as Expense  
         db.expenseData.create({ data: { 
@@ -97,14 +143,14 @@ const expenseInput = app.post("/expense",(req, res) => {
             category: { connect: { id: exp.cat_id } }
         }})
         .then((result) => {
-            res.json({ success: true });
+            res.json({ success: true, data: result });
         })
         .catch((error) => {
             console.log(error);
             res.json({ success: false, error });
         })}
     );
-const expensesData = app.get("/getExpenses", (req, res) => {
+const expensesData = app.get("/expenses", (req, res) => {
         db.expenseData.findMany().then((result) => {
             res.json({ success: true, data: result });
         });

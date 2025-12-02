@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
-    "module": "CommonJS", 
+    "target": "ES2022", // Use a modern target that natively supports async/await
+    "module": "NodeNext", // 🔑 CRITICAL FIX: Use NodeNext for modern module handling
     "rootDir": ".",
     "outDir": "./dist",
 
@@ -13,11 +13,8 @@
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
 
-    // 1. ADD THIS: Specifically enforces how module files are located
-    "moduleResolution": "node", 
-
-    // 2. TEMPORARY CHANGE: Switch to a more modern CommonJS alternative
-    // If 'node' doesn't work, try 'NodeNext' or 'Bundler' 
+    // 🔑 CRITICAL FIX: Match module resolution to module setting
+    "moduleResolution": "NodeNext" 
   },
   "include": ["."],
   "exclude": ["node_modules"]
