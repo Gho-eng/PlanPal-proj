@@ -1,5 +1,3 @@
-# Node deps
-node_modules/
 
 # Build / caches
 dist/
