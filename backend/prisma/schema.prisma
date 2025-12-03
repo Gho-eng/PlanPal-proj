@@ -4,6 +4,7 @@ generator client {
 
 datasource db {
   provider = "sqlite"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -56,4 +57,10 @@ model Category {
 
   @@unique([userId, name])
   @@index([userId])
+}
+
+model GoalData {
+  id        Int     @id @default(autoincrement())
+  data      String
+  createdAt DateTime @default(now())
 }
